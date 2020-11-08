@@ -1,6 +1,12 @@
-# Plan
+# Overview
 
-## Project strategy and workflow
+An implementation of [statsd](https://github.com/statsd/statsd) in Go for learning purposes. `mini_gostatsd` currently aggregates the metrics specified below and `Graphite` is the only supported backend.
+
+## Metrics
+
+- `mini_gostatsd.graphiteStats.last_flush`: the time which the stats were last flushed/sent to `Graphite`.
+
+# Project strategy and workflow
 
 - What components are there?
 
@@ -18,7 +24,7 @@ Spin up `statsd` by running the main module, it then establishes a connection wi
 
 Refer to the statsd and the gostatsd repository to see what tests they conduct.
 
-## Implementation details
+# Implementation details
 
 - How do I send metrics continuously to `Graphite` in a set interval? (where would this implementation be)
 
@@ -28,18 +34,18 @@ Using `time.Tick(interval)`, for every specified set interval, post the stat to 
 
 We can feed multiple metrics to `Graphite` by writing data such as `metric_one`, `metric_two` and so one where each of them are in the plain text format specified in the [Graphite documentation](https://graphite.readthedocs.io/en/latest/feeding-carbon.html) and separated by a **new line character** `\n`. We can make use of an array to store the metrics.
 
-# Overview
-
-An implementation of [statsd](https://github.com/statsd/statsd) in Go for learning purposes. `mini_gostatsd` currently aggregates the metrics specified below and `Graphite` is the only supported backend.
-
-## Metrics
-
-- `mini_gostatsd.graphiteStats.last_flush`: the time which the stats were last flushed/sent to `Graphite`.
-
 # Get started
 
 ## Using `docker`
 Explain my troubles of running `Graphite` locally, and state the reasons for why using an existing docker image is the most reliable way. Of course, give the instructions here, too.
+
+```bash
+# build the graphite webapp and carbon image and run them in the container
+make run-docker
+
+# in a different shell session, it will start sending metrics to graphite in set intervals
+go run stats.go
+```
 
 # CI/CD
 
@@ -49,8 +55,9 @@ Explain my troubles of running `Graphite` locally, and state the reasons for why
 ## Pipeline
 `Travis CI`. Talk about some house-keeping stuff, such as setting up the pipeline in `Travis CI` if you don't have it already.
 
-# Future work
+# Future work/Improvements
 
+- How does statsd send data to the backend in intervals? Does it use `time.tick`?
 - Run the process/daemon from a configuration file rather than hard-coded parameters.
 - Add different metric types such as gauges, histogram and summary.
 - Generate graphs and add them to Grafana without manual addition.

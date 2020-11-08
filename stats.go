@@ -8,24 +8,26 @@ import (
 )
 
 type Metric struct {
-	path string
-	value int64
+	path      string
+	value     int64
 	timestamp int64
 }
 
+// conform to the Graphite data path format, <path.subpath.more_sub> <key_value> <timestamp>
 func (m *Metric) toText() string {
-	return m.path + "." + fmt.Sprint(m.value) + "." + fmt.Sprint(m.timestamp)
+	return m.path + " " + fmt.Sprint(m.value) + " " + fmt.Sprint(m.timestamp)
 }
 
-type Stats struct  {
+type Stats struct {
 	metrics []Metric
 }
 
-func (s *Stats) add(path string, value int64, timestamp int64) []Metric {
-	result := append(s.metrics, Metric{path, value, timestamp})
-	return result
+// add a metric to metrics in Stats
+func (s *Stats) add(path string, value int64, timestamp int64) {
+	s.metrics = append(s.metrics, Metric{path, value, timestamp})
 }
 
+// convert metrics to text
 func (s *Stats) toText() string {
 	result := ""
 
@@ -38,9 +40,10 @@ func (s *Stats) toText() string {
 
 const (
 	graphiteHost    = "localhost"
-	graphitePort    = "8000"
-	connType        = "udp"
-	flushInterval   = 3 * time.Second
+	graphitePort    = "2003"
+	// udp connection raises a write error
+	connType        = "tcp"
+	flushInterval   = 2 * time.Second
 	globalNameSpace = "mini_gostatsd"
 )
 
@@ -59,19 +62,19 @@ func flushStat(conn net.Conn, interval time.Duration, stats *Stats) {
 // write to Graphite
 func postStat(conn net.Conn, stats *Stats) {
 	currTimestamp := time.Now().Unix()
-	
-	var lastFlush int64
-	_, exists := graphiteStats["last_flush"]
 
-	if (!exists) {
+	var lastFlush int64
+
+	if _, exists := graphiteStats["last_flush"]; !exists {
 		lastFlush = 0
 	} else {
 		lastFlush = graphiteStats["last_flush"]
 	}
 
-	stats.add(globalNameSpace + ".graphiteStats.last_flush", lastFlush, currTimestamp)
+	stats.add(globalNameSpace+".graphiteStats.last_flush", lastFlush, currTimestamp)
 	graphiteStats["last_flush"] = time.Now().Unix()
 
+	// send text data to graphite
 	_, err := conn.Write([]byte(stats.toText()))
 
 	if err != nil {
